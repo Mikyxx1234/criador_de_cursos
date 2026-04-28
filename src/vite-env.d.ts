@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_COVERS_BUCKET?: string;
   readonly VITE_ADMIN_EMAIL?: string;
   readonly VITE_ADMIN_PASSWORD?: string;
+  readonly VITE_OPENAI_API_KEY?: string;
 }
 
 interface ImportMeta {

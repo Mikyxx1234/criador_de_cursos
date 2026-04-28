@@ -39,6 +39,7 @@ import {
 } from "@/services/questionService";
 import { parseApiError, pingApi } from "@/services/apiClient";
 import { RenewTokenModal } from "@/components/auth/RenewTokenModal";
+import { AIFormattingPanel } from "@/components/course/AIFormattingPanel";
 
 interface CourseImportPageProps {
   onBackToList: () => void;
@@ -1283,6 +1284,12 @@ function ImportProgress({
         </div>
 
         {hasError && debugInfo && <DebugPanel debug={debugInfo} />}
+
+        {done && !hasError && courseId && (
+          <div className="pt-2">
+            <AIFormattingPanel courseId={courseId} />
+          </div>
+        )}
 
         {(done || hasError) && (
           <div className="flex flex-wrap justify-end gap-2 pt-2">
