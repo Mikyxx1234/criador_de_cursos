@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*.local
+.vite
+.DS_Store
+*.log
+
+tsconfig.tsbuildinfo
+
+_*.json
+_*.mjs
+_*.txt
+_*.docx
+out_*.txt
