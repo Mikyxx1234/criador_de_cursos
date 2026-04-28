@@ -196,7 +196,11 @@ export function normalizeActivity(raw: unknown): ActivityResponse | null {
   }
 
   const id = toNumber(r.id ?? r.ID ?? r._id, 0);
-  const courseId = toNumber(r.course_id ?? r.courseId ?? r.course?.id, 0);
+  const nestedCourse = r.course as { id?: unknown } | undefined;
+  const courseId = toNumber(
+    r.course_id ?? r.courseId ?? nestedCourse?.id,
+    0
+  );
   const order = toNumber(r.order ?? r.position ?? r.sort ?? 0, 0);
   const title = String(r.title ?? r.name ?? r.label ?? "Atividade");
 

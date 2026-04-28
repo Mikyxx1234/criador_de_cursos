@@ -268,7 +268,7 @@ function parseQuestionsFromAlternativeBlock(rawText: string): ParsedQuestion[] {
       if (alts[letter] && letter !== "A") {
         finalize();
         // Esta linha "fora de ordem" provavelmente é A da próxima — descarta.
-        if (letter !== "A") continue;
+        continue;
       }
 
       if (value.includes("__CORRECT__")) {
