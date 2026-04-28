@@ -47,3 +47,161 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-400;
 }
+
+/* ----------------------------------------------------------------------------
+ * Welcome splash animations
+ * Usadas pelo componente WelcomeSplash logo após o login.
+ * ---------------------------------------------------------------------------- */
+@keyframes splash-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.splash-pop {
+  animation: splash-pop-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes splash-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+}
+.splash-pop-out {
+  animation: splash-pop-out 0.5s ease-in forwards;
+}
+
+@keyframes splash-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.splash-fade-up {
+  animation: splash-fade-up 0.5s 0.35s ease-out both;
+}
+.splash-fade-up-delayed {
+  animation: splash-fade-up 0.5s 0.55s ease-out both;
+}
+
+@keyframes splash-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.splash-check polyline {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: splash-check-draw 0.55s 0.25s cubic-bezier(0.65, 0, 0.45, 1)
+    forwards;
+}
+
+@keyframes splash-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.65;
+  }
+  80% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.splash-ring {
+  animation: splash-ring 1.6s ease-out infinite;
+}
+.splash-ring-delayed {
+  animation: splash-ring 1.6s 0.4s ease-out infinite;
+}
+
+@keyframes splash-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(20px, -15px, 0);
+  }
+}
+.splash-float {
+  animation: splash-float 6s ease-in-out infinite;
+}
+.splash-float-delayed {
+  animation: splash-float 7s 1s ease-in-out infinite reverse;
+}
+
+.splash-bar {
+  position: relative;
+  width: 9rem;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+.splash-bar > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: splash-bar-slide 1.2s ease-in-out infinite;
+}
+@keyframes splash-bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Page header — fundo moderno com orbs + grid pontilhada
+ * ---------------------------------------------------------------------------- */
+@keyframes page-header-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(12px, -10px, 0);
+  }
+}
+.page-header-orb {
+  animation: page-header-float 9s ease-in-out infinite;
+  will-change: transform;
+}
+.page-header-orb-delayed {
+  animation: page-header-float 11s 1.5s ease-in-out infinite reverse;
+  will-change: transform;
+}
+.page-header-dots {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgb(43 70 219 / 0.55) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}

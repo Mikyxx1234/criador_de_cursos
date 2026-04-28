@@ -19,19 +19,52 @@ function readStoredAuth(): boolean {
   }
 }
 
+// Estado compartilhado entre todas as instâncias do hook na mesma aba.
+// Sem isso, cada componente que chama useAdminAuth() teria seu próprio
+// useState e o login() em um deles não notificaria os outros — exigindo F5.
+let currentAuth: boolean = readStoredAuth();
+const subscribers = new Set<(value: boolean) => void>();
+
+function broadcast(value: boolean) {
+  currentAuth = value;
+  subscribers.forEach((fn) => fn(value));
+}
+
+function setStoredAuth(value: boolean) {
+  try {
+    if (value) {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, "1");
+    } else {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+  broadcast(value);
+}
+
 export function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
-    readStoredAuth()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => currentAuth
   );
 
   useEffect(() => {
+    subscribers.add(setIsAuthenticated);
+    if (isAuthenticated !== currentAuth) {
+      setIsAuthenticated(currentAuth);
+    }
+
     function handleStorage(event: StorageEvent) {
       if (event.key === AUTH_STORAGE_KEY) {
-        setIsAuthenticated(event.newValue === "1");
+        broadcast(event.newValue === "1");
       }
     }
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    return () => {
+      subscribers.delete(setIsAuthenticated);
+      window.removeEventListener("storage", handleStorage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = useCallback(
@@ -40,24 +73,14 @@ export function useAdminAuth() {
       const ok =
         normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD;
       if (!ok) return false;
-      try {
-        window.localStorage.setItem(AUTH_STORAGE_KEY, "1");
-      } catch {
-        // ignore
-      }
-      setIsAuthenticated(true);
+      setStoredAuth(true);
       return true;
     },
     []
   );
 
   const logout = useCallback(() => {
-    try {
-      window.localStorage.removeItem(AUTH_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-    setIsAuthenticated(false);
+    setStoredAuth(false);
   }, []);
 
   return { isAuthenticated, login, logout };

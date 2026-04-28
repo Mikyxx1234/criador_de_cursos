@@ -1,10 +1,21 @@
+import { useEffect, useRef, useState } from "react";
 import { LogOut } from "lucide-react";
 import { AdminShell } from "@/pages/AdminShell";
 import { LoginPage } from "@/pages/LoginPage";
+import { WelcomeSplash } from "@/components/auth/WelcomeSplash";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export default function App() {
   const { isAuthenticated, logout } = useAdminAuth();
+  const [showSplash, setShowSplash] = useState(false);
+  const wasAuthRef = useRef(isAuthenticated);
+
+  useEffect(() => {
+    if (!wasAuthRef.current && isAuthenticated) {
+      setShowSplash(true);
+    }
+    wasAuthRef.current = isAuthenticated;
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return <LoginPage />;
@@ -23,6 +34,9 @@ export default function App() {
         <LogOut className="h-3.5 w-3.5" />
         Sair
       </button>
+      {showSplash && (
+        <WelcomeSplash onDone={() => setShowSplash(false)} />
+      )}
     </>
   );
 }
