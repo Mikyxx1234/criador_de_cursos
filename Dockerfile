@@ -25,11 +25,14 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_SUPABASE_VIDEOS_BUCKET=$VITE_SUPABASE_VIDEOS_BUCKET \
     VITE_SUPABASE_COVERS_BUCKET=$VITE_SUPABASE_COVERS_BUCKET \
     GIT_SHA=$GIT_SHA \
-    NODE_ENV=production \
     CI=true
 
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+
+# IMPORTANTE: instalamos TUDO (incluindo devDependencies como `vite` e
+# `typescript`/`tsc`) porque elas são necessárias para o `npm run build`.
+# Não definir NODE_ENV=production aqui, senão o npm pula as devDependencies.
+RUN npm ci --no-audit --no-fund --include=dev
 
 COPY . .
 
