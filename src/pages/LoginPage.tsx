@@ -39,7 +39,6 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         });
         return;
       }
-      toast.success("Bem-vindo!", { description: "Acesso liberado." });
       onAuthenticated?.();
     } finally {
       setSubmitting(false);

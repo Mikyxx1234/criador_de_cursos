@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 
 const AUTH_STORAGE_KEY = "curso_admin_auth_v1";
 
+// Chaves persistidas por outros pedaços do app que devem ser limpas no
+// logout para evitar que a próxima sessão restaure uma view stale (ex.:
+// "estava editando o curso 17" → curso já foi deletado → tela em branco).
+const SESSION_SCOPED_STORAGE_KEYS = [
+  "curso_admin_view_v1",
+  "curso_admin_builder_v1",
+];
+
 const ADMIN_EMAIL = (
   import.meta.env.VITE_ADMIN_EMAIL || "adm@eduit.com.br"
 )
@@ -43,6 +51,16 @@ function setStoredAuth(value: boolean) {
   broadcast(value);
 }
 
+function clearSessionScopedStorage() {
+  try {
+    for (const key of SESSION_SCOPED_STORAGE_KEYS) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function useAdminAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => currentAuth
@@ -73,6 +91,7 @@ export function useAdminAuth() {
       const ok =
         normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD;
       if (!ok) return false;
+      clearSessionScopedStorage();
       setStoredAuth(true);
       return true;
     },
@@ -80,6 +99,7 @@ export function useAdminAuth() {
   );
 
   const logout = useCallback(() => {
+    clearSessionScopedStorage();
     setStoredAuth(false);
   }, []);
 

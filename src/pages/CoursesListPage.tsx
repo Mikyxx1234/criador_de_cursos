@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  LayoutGrid,
+  List as ListIcon,
   Pencil,
   Plus,
   Power,
@@ -34,7 +36,7 @@ import {
   DIFFICULTY_LEVELS,
   type CourseResponse,
 } from "@/types/course";
-import { calcFinalPrice, formatBRL, pctDiscount } from "@/lib/utils";
+import { calcFinalPrice, cn, formatBRL, pctDiscount } from "@/lib/utils";
 import { CourseCoverImage } from "@/components/course/CourseCoverImage";
 import { RenewTokenModal } from "@/components/auth/RenewTokenModal";
 
@@ -45,6 +47,19 @@ interface CoursesListPageProps {
 }
 
 type StatusFilter = "all" | "active" | "inactive";
+type ViewMode = "cards" | "list";
+
+const VIEW_MODE_STORAGE_KEY = "curso_admin_view_mode_v1";
+
+function loadInitialViewMode(): ViewMode {
+  if (typeof window === "undefined") return "cards";
+  try {
+    const raw = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return raw === "list" ? "list" : "cards";
+  } catch {
+    return "cards";
+  }
+}
 
 export function CoursesListPage({
   onCreateNew,
@@ -69,6 +84,17 @@ export function CoursesListPage({
   );
   const [deleting, setDeleting] = useState(false);
   const [renewTokenOpen, setRenewTokenOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    loadInitialViewMode()
+  );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+    } catch {
+      // ignore
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 400);
@@ -225,8 +251,11 @@ export function CoursesListPage({
           setStatus={setStatus}
         />
 
-        <div className="mt-4 text-xs text-slate-500">
-          {loading ? "Carregando..." : totalLabel}
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <span className="text-xs text-slate-500">
+            {loading ? "Carregando..." : totalLabel}
+          </span>
+          <ViewModeToggle value={viewMode} onChange={setViewMode} />
         </div>
 
         {error && (
@@ -271,18 +300,33 @@ export function CoursesListPage({
           ) : data && data.courses.length === 0 ? (
             <EmptyState onCreateNew={onCreateNew} hasFilters={Boolean(debouncedSearch || category || difficulty || status !== "all")} />
           ) : data ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {data.courses.map((course) => (
-                <CourseListItem
-                  key={course.id}
-                  course={course}
-                  toggling={togglingId === course.id}
-                  onEdit={() => onEdit(course.id)}
-                  onToggleActive={() => handleToggleActive(course)}
-                  onDelete={() => setCourseToDelete(course)}
-                />
-              ))}
-            </div>
+            viewMode === "cards" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {data.courses.map((course) => (
+                  <CourseListItem
+                    key={course.id}
+                    course={course}
+                    toggling={togglingId === course.id}
+                    onEdit={() => onEdit(course.id)}
+                    onToggleActive={() => handleToggleActive(course)}
+                    onDelete={() => setCourseToDelete(course)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {data.courses.map((course) => (
+                  <CourseListRow
+                    key={course.id}
+                    course={course}
+                    toggling={togglingId === course.id}
+                    onEdit={() => onEdit(course.id)}
+                    onToggleActive={() => handleToggleActive(course)}
+                    onDelete={() => setCourseToDelete(course)}
+                  />
+                ))}
+              </div>
+            )
           ) : null}
         </div>
 
@@ -533,6 +577,172 @@ function CourseListItem({
           </Button>
         </div>
       </CardContent>
+    </Card>
+  );
+}
+
+interface ViewModeToggleProps {
+  value: ViewMode;
+  onChange: (value: ViewMode) => void;
+}
+
+function ViewModeToggle({ value, onChange }: ViewModeToggleProps) {
+  return (
+    <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-soft">
+      <button
+        type="button"
+        onClick={() => onChange("cards")}
+        aria-pressed={value === "cards"}
+        title="Visualizar em cards"
+        className={cn(
+          "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors",
+          value === "cards"
+            ? "bg-brand-600 text-white shadow-sm"
+            : "text-slate-600 hover:bg-slate-100"
+        )}
+      >
+        <LayoutGrid className="h-3.5 w-3.5" />
+        Cards
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("list")}
+        aria-pressed={value === "list"}
+        title="Visualizar em lista"
+        className={cn(
+          "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors",
+          value === "list"
+            ? "bg-brand-600 text-white shadow-sm"
+            : "text-slate-600 hover:bg-slate-100"
+        )}
+      >
+        <ListIcon className="h-3.5 w-3.5" />
+        Lista
+      </button>
+    </div>
+  );
+}
+
+function CourseListRow({
+  course,
+  toggling,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}: CourseListItemProps) {
+  const price = Number(course.price ?? 0);
+  const promo = course.promotional_price
+    ? Number(course.promotional_price)
+    : null;
+  const finalPrice = calcFinalPrice(price, promo);
+  const discount = pctDiscount(price, promo);
+  const isFree = price === 0;
+
+  return (
+    <Card className="overflow-hidden transition-shadow hover:shadow-lift">
+      <div className="flex flex-col sm:flex-row">
+        <div className="relative w-full sm:w-44 md:w-52 shrink-0 aspect-[16/9] sm:aspect-auto bg-slate-100 overflow-hidden">
+          <CourseCoverImage
+            url={course.cover_image_url}
+            alt={course.title}
+            courseId={course.id}
+            title={course.title}
+            category={course.category}
+            categoryLabel={course.category_label}
+            className="absolute inset-0 h-full w-full"
+          />
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+            {course.is_active ? (
+              <Badge tone="success">Ativo</Badge>
+            ) : (
+              <Badge tone="neutral">Inativo</Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col md:flex-row md:items-center gap-3 p-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-2">
+              <h3 className="text-sm font-semibold text-slate-900 leading-snug line-clamp-1 flex-1">
+                {course.title}
+              </h3>
+              <span className="text-[11px] text-slate-400 shrink-0">
+                ID {course.id}
+              </span>
+            </div>
+            {course.short_description && (
+              <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                {course.short_description}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {course.category_label && (
+                <Badge tone="brand">{course.category_label}</Badge>
+              )}
+              {course.difficulty_level_label && (
+                <Badge tone="violet">{course.difficulty_level_label}</Badge>
+              )}
+              {course.workload && <Badge>{course.workload}h</Badge>}
+              {course.activities_count !== undefined && (
+                <Badge>{course.activities_count} atividades</Badge>
+              )}
+              {isFree ? (
+                <Badge tone="sky">Gratuito</Badge>
+              ) : promo && promo < price ? (
+                <Badge tone="amber">-{discount}%</Badge>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-col md:items-end gap-1 md:min-w-[120px]">
+            {isFree ? (
+              <span className="text-sm font-semibold text-emerald-700">
+                Gratuito
+              </span>
+            ) : (
+              <div className="flex items-baseline gap-2">
+                {promo && promo < price && (
+                  <span className="text-[11px] text-slate-400 line-through">
+                    {formatBRL(price)}
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-slate-900">
+                  {formatBRL(finalPrice)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEdit}
+              icon={<Pencil className="h-3.5 w-3.5" />}
+            >
+              Editar
+            </Button>
+            <Button
+              variant={course.is_active ? "ghost" : "primary"}
+              size="sm"
+              onClick={onToggleActive}
+              loading={toggling}
+              icon={<Power className="h-3.5 w-3.5" />}
+            >
+              {course.is_active ? "Desativar" : "Ativar"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="text-rose-600 hover:bg-rose-50"
+              icon={<Trash2 className="h-3.5 w-3.5" />}
+              aria-label="Excluir"
+              title="Excluir"
+            />
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }

@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LogOut } from "lucide-react";
 import { AdminShell } from "@/pages/AdminShell";
 import { LoginPage } from "@/pages/LoginPage";
 import { WelcomeSplash } from "@/components/auth/WelcomeSplash";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+
+const SESSION_VIEW_KEYS = ["curso_admin_view_v1", "curso_admin_builder_v1"];
 
 export default function App() {
   const { isAuthenticated, logout } = useAdminAuth();
@@ -17,13 +20,25 @@ export default function App() {
     wasAuthRef.current = isAuthenticated;
   }, [isAuthenticated]);
 
+  const handleResetSession = useCallback(() => {
+    try {
+      for (const key of SESSION_VIEW_KEYS) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   if (!isAuthenticated) {
     return <LoginPage />;
   }
 
   return (
     <>
-      <AdminShell />
+      <ErrorBoundary onResetSession={handleResetSession}>
+        <AdminShell />
+      </ErrorBoundary>
       <button
         type="button"
         onClick={logout}

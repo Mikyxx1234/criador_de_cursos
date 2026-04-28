@@ -12,6 +12,12 @@ type View =
 
 const VIEW_STORAGE_KEY = "curso_admin_view_v1";
 
+// Persistimos a view atual no localStorage para que um F5 acidental
+// durante o uso volte exatamente para onde você estava. O hook
+// useAdminAuth limpa essa chave em login()/logout(), garantindo que
+// uma nova sessão sempre comece "fresca" na lista — isso evita o caso
+// de "tela em branco" quando a view antiga apontava para um curso
+// deletado / token expirado / state stale.
 function loadInitialView(): View {
   if (typeof window === "undefined") return { name: "list" };
   try {
